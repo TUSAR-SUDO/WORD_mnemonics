@@ -1,0 +1,366 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mnemonic Memory Room</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--cyan:#00f5ff;--pink:#ff00aa;--purple:#aa00ff;--green:#00ff88;--bg:#080810;--card:rgba(12,12,20,.95)}
+body{font-family:'Rajdhani',sans-serif;overflow:hidden;height:100vh;background:var(--bg);color:#fff}
+.app{display:flex;height:100vh}
+.room{flex:1;position:relative;overflow:hidden;background:#000}
+.room>img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.85)}
+.room-vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.5));pointer-events:none}
+.room-hdr{position:absolute;top:24px;left:28px;z-index:50}
+.room-hdr h1{font-family:'Orbitron',sans-serif;font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,var(--cyan),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px}
+.room-hdr p{font-size:.75rem;color:rgba(255,255,255,.45);letter-spacing:2px;margin-top:3px}
+.stuck{position:absolute;inset:0;z-index:10;pointer-events:none}
+.si{position:absolute;pointer-events:auto;z-index:10;cursor:grab;animation:fl 4s ease-in-out infinite}
+.si:nth-child(even){animation-delay:-2s;animation-duration:4.5s}
+@keyframes fl{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+.si:hover{z-index:200;animation-play-state:paused}
+.si:hover .si-close{opacity:1;transform:scale(1)}
+.si-close{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:#ff3355;border-radius:50%;color:#fff;font-size:12px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0);transition:all .2s;z-index:210}
+.si-mn{background:var(--card);border:1.5px solid var(--purple);border-radius:12px;padding:8px 10px;width:130px;box-shadow:0 4px 20px rgba(170,0,255,.25)}
+.si-mn .w{font-family:'Orbitron',sans-serif;font-size:.65rem;font-weight:700;color:var(--cyan);text-align:center;margin-bottom:5px;letter-spacing:.5px}
+.si-mn .p{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin-bottom:5px}
+.si-mn .p span{font-size:.5rem;padding:1px 6px;border-radius:12px;color:#fff}
+.si-mn .p span:nth-child(1){background:#ff6b6b}
+.si-mn .p span:nth-child(2){background:#4ecdc4}
+.si-mn .p span:nth-child(3){background:#a855f7}
+.si-mn .p span:nth-child(4){background:#f97316}
+.si-mn img{width:100%;height:55px;object-fit:cover;border-radius:6px;display:block}
+.si-img{text-align:center}
+.si-img img{width:85px;height:85px;object-fit:cover;border-radius:50%;border:2px solid var(--cyan);box-shadow:0 0 20px rgba(0,245,255,.35);display:block;margin:0 auto}
+.si-img .c{font-family:'Orbitron',sans-serif;font-size:.6rem;color:var(--cyan);margin-top:4px}
+.side{width:340px;height:100vh;background:var(--card);border-left:1.5px solid rgba(0,245,255,.2);display:flex;flex-direction:column;position:relative;z-index:100;flex-shrink:0}
+.side::before{content:'';position:absolute;top:0;left:0;width:1.5px;height:100%;background:linear-gradient(180deg,var(--cyan),var(--pink),var(--purple));opacity:.6}
+.side-in{padding:18px;height:100%;display:flex;flex-direction:column;overflow:hidden;gap:12px}
+.box{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px}
+.lbl{font-family:'Orbitron',sans-serif;font-size:.55rem;color:var(--pink);letter-spacing:1.5px;margin-bottom:8px}
+.inp-row{display:flex;gap:8px;align-items:stretch}
+.inp{flex:1;padding:14px 16px;font-family:'Rajdhani',sans-serif;font-size:1.15rem;font-weight:600;background:rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.12);border-radius:10px;color:#fff;outline:none;transition:all .3s}
+.inp:focus{border-color:var(--pink);box-shadow:0 0 25px rgba(255,0,170,.2)}
+.inp:disabled{opacity:.3}
+.inp::placeholder{color:rgba(255,255,255,.25)}
+.btn{padding:14px 28px;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));border:none;border-radius:10px;color:#fff;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;letter-spacing:1px;white-space:nowrap;min-width:120px}
+.btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.2),transparent);transition:left .5s}
+.btn:hover::before{left:100%}
+.btn:hover{box-shadow:0 0 30px rgba(255,0,170,.4);transform:translateY(-2px);filter:brightness(1.1)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none;filter:none}
+.btn:disabled:hover{box-shadow:none}
+.ld{display:none;text-align:center;padding:25px}
+.ld.on{display:block}
+.ld-t{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;background:linear-gradient(90deg,var(--cyan),var(--pink),var(--purple));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gf 1.5s linear infinite,gt .3s ease infinite}
+@keyframes gf{0%{background-position:0% center}100%{background-position:200% center}}
+@keyframes gt{0%,100%{clip-path:inset(0)}25%{clip-path:inset(20% 0 60% 0)}50%{clip-path:inset(50% 0 30% 0)}75%{clip-path:inset(70% 0 10% 0)}}
+.ld-d{display:flex;justify-content:center;gap:5px;margin-top:12px}
+.ld-d span{width:8px;height:8px;background:var(--pink);border-radius:50%;animation:db 1.4s ease-in-out infinite}
+.ld-d span:nth-child(2){animation-delay:.2s}.ld-d span:nth-child(3){animation-delay:.4s}
+@keyframes db{0%,80%,100%{transform:scale(.4);opacity:.3}40%{transform:scale(1.1);opacity:1}}
+.res{flex:1;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:14px;overflow-y:auto;min-height:0}
+.res::-webkit-scrollbar{width:4px}
+.res::-webkit-scrollbar-thumb{background:linear-gradient(var(--cyan),var(--pink));border-radius:2px}
+.ph{text-align:center;padding:35px 10px;color:rgba(255,255,255,.2)}
+.ph-i{font-size:2.5rem;margin-bottom:10px;opacity:.3}
+.rw{text-align:center;margin-bottom:14px;animation:fi .5s ease both}
+@keyframes fi{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+.rw h2{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;display:inline-flex;gap:2px}
+.rw h2 span{display:inline-block;animation:lr .5s ease forwards;opacity:0}
+@keyframes lr{0%{opacity:0;transform:translateY(20px) rotateX(-90deg)}50%{opacity:1}100%{opacity:1;transform:translateY(0) rotateX(0)}}
+.pcs{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;animation:fi .5s ease .15s both}
+.pc{padding:8px 16px;border-radius:20px;font-family:'Orbitron',sans-serif;font-size:.75rem;font-weight:600;color:#fff;animation:ca .5s cubic-bezier(.68,-.55,.265,1.55) forwards;opacity:0;transform:scale(0)}
+@keyframes ca{to{opacity:1;transform:scale(1)}}
+.pc:nth-child(1){background:#ff6b6b}.pc:nth-child(2){background:#4ecdc4}.pc:nth-child(3){background:#a855f7}.pc:nth-child(4){background:#f97316}
+.ex{background:rgba(255,255,255,.03);border-left:2px solid var(--purple);padding:12px;border-radius:0 8px 8px 0;margin-bottom:14px;font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.7);animation:fi .5s ease .3s both}
+.ri{width:140px;height:140px;object-fit:cover;border-radius:14px;border:2px solid var(--cyan);box-shadow:0 0 30px rgba(0,245,255,.25);display:block;margin:0 auto 12px;animation:ir .6s ease .2s both}
+@keyframes ir{0%{opacity:0;transform:scale(.85) rotateY(15deg)}100%{opacity:1;transform:scale(1) rotateY(0)}}
+.prg{background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px}
+.prg-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.prg-l{font-family:'Orbitron',sans-serif;font-size:.55rem;color:var(--cyan);letter-spacing:1.5px}
+.prg-c{font-family:'Orbitron',sans-serif;font-size:.9rem;font-weight:700}
+.prg-b{height:8px;background:rgba(0,0,0,.5);border-radius:6px;overflow:hidden}
+.prg-f{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--green),var(--pink));border-radius:6px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.hist{flex-shrink:0}
+.hist-l{font-family:'Orbitron',sans-serif;font-size:.5rem;color:rgba(255,255,255,.3);letter-spacing:1.5px;margin-bottom:6px}
+.hist-s{display:flex;flex-wrap:wrap;gap:5px;max-height:75px;overflow-y:auto}
+.hist-s::-webkit-scrollbar{width:3px}
+.hist-s::-webkit-scrollbar-thumb{background:var(--purple);border-radius:2px}
+.hi{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:rgba(0,0,0,.35);border-radius:16px;font-size:.75rem;cursor:pointer;transition:all .3s;border:1px solid transparent;animation:hiIn .3s ease both}
+@keyframes hiIn{0%{opacity:0;transform:scale(.7)}100%{opacity:1;transform:scale(1)}}
+.hi:hover{transform:translateY(-2px);filter:brightness(1.2)}
+.hi.mn{border-color:rgba(170,0,255,.3);color:var(--purple)}
+.hi.im{border-color:rgba(0,245,255,.3);color:var(--cyan)}
+.hi b{font-family:'Orbitron',sans-serif;font-size:.4rem;padding:1px 5px;border-radius:6px;font-weight:700}
+.hi.mn b{background:var(--purple);color:#fff}
+.hi.im b{background:var(--cyan);color:var(--bg)}
+.rf{display:none;text-align:center;padding:12px;background:rgba(255,50,50,.08);border:1px solid rgba(255,50,50,.25);border-radius:8px;font-family:'Orbitron',sans-serif;font-size:.7rem;color:#ff4466;letter-spacing:1px;animation:rfp 2s ease infinite}
+.rf.on{display:block}
+@keyframes rfp{0%,100%{border-color:rgba(255,50,50,.25)}50%{border-color:rgba(255,50,50,.5);box-shadow:0 0 15px rgba(255,50,50,.1)}}
+.et{position:fixed;top:-80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#ff4444,#cc0000);color:#fff;padding:12px 24px;border-radius:10px;font-size:.9rem;z-index:9999;transition:top .4s cubic-bezier(.68,-.55,.265,1.55);box-shadow:0 6px 30px rgba(255,0,0,.35)}
+.et.show{top:20px}
+.celeb{position:fixed;inset:0;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;z-index:8000;backdrop-filter:blur(6px)}
+.celeb.on{display:flex}
+.celeb-c{text-align:center;padding:45px;background:var(--card);border:3px solid var(--green);border-radius:24px;animation:ce .6s cubic-bezier(.68,-.55,.265,1.55);position:relative;overflow:hidden}
+.celeb-c::before{content:'';position:absolute;inset:-2px;background:conic-gradient(var(--green),var(--cyan),var(--purple),var(--pink),var(--green));border-radius:24px;z-index:-1;animation:cb 3s linear infinite}
+@keyframes cb{to{transform:rotate(360deg)}}
+@keyframes ce{0%{opacity:0;transform:scale(.3)}100%{opacity:1;transform:scale(1)}}
+.celeb-c h2{font-family:'Orbitron',sans-serif;font-size:1.5rem;background:linear-gradient(135deg,var(--green),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px}
+.celeb-c p{color:rgba(255,255,255,.6);margin-bottom:25px}
+.rbtn{padding:14px 40px;font-family:'Orbitron',sans-serif;font-size:.8rem;font-weight:700;background:transparent;border:2px solid var(--pink);border-radius:10px;color:var(--pink);cursor:pointer;transition:all .3s;letter-spacing:1.5px}
+.rbtn:hover{background:var(--pink);color:#fff;box-shadow:0 0 35px rgba(255,0,170,.35);transform:translateY(-2px)}
+.ptc{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:9999;animation:pe .7s ease-out forwards}
+@keyframes pe{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
+.spk{position:fixed;width:4px;height:4px;background:#fff;border-radius:50%;pointer-events:none;z-index:9999;animation:sp .5s ease-out forwards}
+@keyframes sp{0%{transform:scale(0);opacity:1}50%{transform:scale(2);opacity:.6}100%{transform:scale(0);opacity:0}}
+.trl{position:fixed;width:10px;height:10px;border-radius:50%;pointer-events:none;z-index:4999;animation:trlf .35s ease-out forwards}
+@keyframes trlf{0%{transform:scale(1);opacity:.6}100%{transform:scale(0);opacity:0}}
+.cft{position:fixed;top:-12px;z-index:9000;pointer-events:none;animation:cff linear forwards}
+@keyframes cff{0%{transform:translateY(0) rotateZ(0);opacity:1}100%{transform:translateY(110vh) rotateZ(720deg);opacity:0}}
+@keyframes rip{0%{transform:scale(0);opacity:.7}100%{transform:scale(4);opacity:0}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .3s ease}
+@keyframes successPulse{0%{box-shadow:0 0 0 0 rgba(0,255,136,.6)}100%{box-shadow:0 0 0 30px rgba(0,255,136,0)}}
+</style>
+</head>
+<body><div class="app">
+<div class="room" id="roomPanel">
+<img src="Background image.png" alt="Sick Room">
+<div class="room-vig"></div>
+<div class="room-hdr"><h1>MNEMONIC ROOM</h1><p>Memory Enhancement System</p></div>
+<div class="stuck" id="stuckLayer"></div>
+</div>
+<div class="side">
+<div class="side-in">
+<div class="box">
+<div class="lbl">ENTER WORD</div>
+<div class="inp-row">
+<input type="text" class="inp" id="wordInput" placeholder="Type a word..." autocomplete="off">
+<button class="btn" id="learnBtn">LEARN IT</button>
+</div>
+</div>
+<div class="rf" id="roomFull">ROOM FULL - RESET TO CONTINUE</div>
+<div class="ld" id="loadingBox"><div class="ld-t">DECODING</div><div class="ld-d"><span></span><span></span><span></span></div></div>
+<div class="res" id="resultBox"><div class="ph"><div class="ph-i">🧠</div>Enter a word to begin learning</div></div>
+<div class="prg">
+<div class="prg-h"><span class="prg-l">PROGRESS</span><span class="prg-c" id="prgCount">0 / 20</span></div>
+<div class="prg-b"><div class="prg-f" id="prgFill"></div></div>
+</div>
+<div class="hist">
+<div class="hist-l">HISTORY</div>
+<div class="hist-s" id="histScroll"></div>
+</div>
+<button class="rbtn" id="resetBtn" style="margin-top:10px;width:100%">RESET GAME</button>
+</div>
+</div>
+</div>
+<div class="et" id="errorToast">Something went wrong</div>
+<div class="celeb" id="celebOverlay">
+<div class="celeb-c">
+<h2>ROOM COMPLETE!</h2>
+<p>You mastered 20 words!</p>
+<button class="rbtn" id="celebResetBtn">RESET GAME</button>
+</div>
+</div><script>
+const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+function playSound(freq,type,dur,vol){
+const o=audioCtx.createOscillator();
+const g=audioCtx.createGain();
+o.type=type;o.frequency.setValueAtTime(freq,audioCtx.currentTime);
+g.gain.setValueAtTime(vol||.15,audioCtx.currentTime);
+g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+(dur||.2));
+o.connect(g);g.connect(audioCtx.destination);
+o.start();o.stop(audioCtx.currentTime+(dur||.2));}
+function sfxClick(){playSound(800,'sine',.08,.12);playSound(1200,'sine',.06,.08)}
+function sfxLearn(){playSound(523,'sine',.1,.15);setTimeout(()=>playSound(659,'sine',.1,.15),80);setTimeout(()=>playSound(784,'sine',.15,.15),160)}
+function sfxLand(){playSound(180,'triangle',.15,.2);playSound(120,'sine',.1,.15)}
+function sfxRemove(){playSound(400,'square',.08,.1);setTimeout(()=>playSound(300,'square',.1,.1),60)}
+function sfxCelebrate(){[523,587,659,698,784,880,988,1047].forEach((f,i)=>setTimeout(()=>playSound(f,'sine',.15,.12),i*80))}
+function sfxError(){playSound(200,'sawtooth',.2,.12);setTimeout(()=>playSound(150,'sawtooth',.25,.1),100)}
+let stuckItems=[],wordCount=0;const MAX=20;
+const $=id=>document.getElementById(id);
+const wordInput=$('wordInput'),learnBtn=$('learnBtn'),loadingBox=$('loadingBox'),resultBox=$('resultBox');
+const prgCount=$('prgCount'),prgFill=$('prgFill'),histScroll=$('histScroll'),roomPanel=$('roomPanel');
+const stuckLayer=$('stuckLayer'),errorToast=$('errorToast'),roomFull=$('roomFull');
+const celebOverlay=$('celebOverlay'),resetBtn=$('resetBtn'),celebResetBtn=$('celebResetBtn');
+wordInput.focus();
+learnBtn.onclick=learnWord;
+wordInput.onkeypress=e=>{if(e.key==='Enter')learnWord()};
+resetBtn.onclick=resetGame;
+celebResetBtn.onclick=resetGame;
+async function fetchImage(query){
+try{
+const r=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(query));
+const d=await r.json();
+if(d.thumbnail&&d.thumbnail.source)return d.thumbnail.source;
+if(d.originalimage&&d.originalimage.source)return d.originalimage.source;
+}catch(e){}
+try{
+const r2=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(query)+'_(disambiguation)');
+const d2=await r2.json();
+if(d2.thumbnail&&d2.thumbnail.source)return d2.thumbnail.source;
+}catch(e){}
+try{
+const r3=await fetch('https://en.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(query)+'s');
+const d3=await r3.json();
+if(d3.thumbnail&&d3.thumbnail.source)return d3.thumbnail.source;
+}catch(e){}
+return 'https://picsum.photos/seed/'+encodeURIComponent(query)+'/160/160';
+}
+function generateMnemonic(word){
+const suffixMap={tion:'sun',sion:'ocean',ment:'mint',ness:'ness',ful:'full',less:'less',able:'able',ible:'ible',ous:'ous',ive:'ive',ing:'ing',ly:'ly',er:'er',est:'est',ed:'ed',ize:'eyes',ise:'ice',ify:'ify',ate:'ate',ity:'itty',ence:'ends',ance:'ants',ure:'you',ious:'ius',tion:'shun',ness:'niss',ible:'ibble'};
+const prefixMap={un:'un',re:'re',pre:'pre',dis:'dis',mis:'miss',over:'over',out:'out',sub:'sub',inter:'inner',trans:'train',auto:'auto',anti:'anti',pro:'pro',semi:'semi',super:'super',multi:'multi',mega:'mega',mini:'mini',micro:'micro',neo:'neo',non:'non',post:'post',fore:'fore',bi:'buy',tri:'try',poly:'poly',mono:'mono',tele:'tell',bio:'bio',geo:'geo',hyper:'hyper',ultra:'ultra',meta:'meta',para:'para',counter:'counter',under:'under',extra:'extra',deco:'deco'};
+const simpleWords=['apple','cat','sun','tree','dog','run','big','red','blue','green','hot','cold','fast','slow','jump','sit','eat','drink','sleep','walk','talk','sing','play','work','read','write','open','close','love','hate','give','take','make','fire','rain','snow','wind','fish','bird','bear','lion','wolf','fox','cow','pig','hen','owl','bee','ant','fly','gem','hat','ice','jar','key','leg','map','net','oil','pen','rug','tea','van','yak','zoo','car','bus','toy','box','cup','pot','tin','jug','pin','nut','peg','log','pit','dot','cub','pup'];
+if(simpleWords.includes(word)||word.length<=3){return{type:'image',word,imageQuery:word};}
+let parts=[],remaining=word;
+const allSuffixes=Object.keys(suffixMap).sort((a,b)=>b.length-a.length);
+const allPrefixes=Object.keys(prefixMap).sort((a,b)=>b.length-a.length);
+let foundPrefix=null;
+for(const p of allPrefixes){if(remaining.startsWith(p)&&remaining.length>p.length+2){foundPrefix=p;remaining=remaining.slice(p.length);break}}
+let foundSuffix=null;
+for(const s of allSuffixes){if(remaining.endsWith(s)&&remaining.length>s.length+2){foundSuffix=s;remaining=remaining.slice(0,remaining.length-s.length);break}}
+if(foundPrefix)parts.push(prefixMap[foundPrefix]);
+if(remaining.length>=3){const mid=remaining.slice(0,Math.ceil(remaining.length/2));const mid2=remaining.slice(Math.ceil(remaining.length/2));parts.push(mid,mid2)}else if(remaining.length>0){parts.push(remaining)}
+if(foundSuffix)parts.push(suffixMap[foundSuffix]);
+if(parts.length<2)parts=[word.slice(0,3),word.slice(3)];
+const explanations=[
+'Break "'+word+'" into '+parts.map(p=>'"'+p+'"').join(' + ')+'. Imagine '+parts.join(' and ')+' together!',
+'Split "'+word+'" as '+parts.map(p=>'"'+p+'"').join(' + ')+'. Picture '+parts.join(' with ')+' in a scene!',
+'Think "'+word+'" = '+parts.map(p=>'"'+p+'"').join(' + ')+'. See '+parts.join(' and ')+' in your mind!'
+];
+return{type:'mnemonic',word,parts,explanation:explanations[Math.floor(Math.random()*explanations.length)],imageQuery:word};}
+async function learnWord(){
+const word=wordInput.value.trim().toLowerCase();
+if(!word||wordCount>=MAX||word.length<2)return;
+sfxClick();
+learnBtn.disabled=true;wordInput.disabled=true;loadingBox.classList.add('on');resultBox.innerHTML='';
+try{const res=generateMnemonic(word);await showResult(res,word);sfxLearn();}
+catch(e){sfxError();showError();}
+finally{loadingBox.classList.remove('on');learnBtn.disabled=false;wordInput.disabled=false;wordInput.value='';wordInput.focus()}}
+async function showResult(res,word){
+resultBox.innerHTML='';
+if(res.type==='mnemonic')await showMnemonic(res);else await showImage(res);
+addHistory(res.word||word,res.type);}
+async function showMnemonic(res){
+const wd=document.createElement('div');wd.className='rw';
+const cols=['#ff6b6b','#4ecdc4','#a855f7','#f97316','#06b6d4'];
+wd.innerHTML='<h2>'+res.word.split('').map((c,i)=>'<span style="animation-delay:'+(i*.05)+'s;color:'+cols[i%5]+'">'+c+'</span>').join('')+'</h2>';
+resultBox.appendChild(wd);
+const pc=document.createElement('div');pc.className='pcs';
+res.parts.forEach((p,i)=>{const ch=document.createElement('div');ch.className='pc';ch.textContent=p;ch.style.animationDelay=(.3+i*.15)+'s';pc.appendChild(ch)});
+resultBox.appendChild(pc);
+const ex=document.createElement('div');ex.className='ex';ex.textContent=res.explanation;resultBox.appendChild(ex);
+const imgUrl=await fetchImage(res.imageQuery);
+const img=document.createElement('img');img.className='ri';img.src=imgUrl;img.alt=res.word;
+resultBox.appendChild(img);
+setTimeout(()=>flyToRoom(res,'mnemonic',imgUrl),100);}
+async function showImage(res){
+const wd=document.createElement('div');wd.className='rw';
+wd.innerHTML='<h2>'+res.word.split('').map((c,i)=>'<span style="animation-delay:'+(i*.05)+'s;color:#00f5ff">'+c+'</span>').join('')+'</h2>';
+resultBox.appendChild(wd);
+const imgUrl=await fetchImage(res.imageQuery);
+const img=document.createElement('img');img.className='ri';img.src=imgUrl;img.alt=res.word;
+resultBox.appendChild(img);
+setTimeout(()=>flyToRoom(res,'image',imgUrl),100);}
+function flyToRoom(res,type,imgUrl){
+if(wordCount>=MAX)return;
+const rr=roomPanel.getBoundingClientRect();
+const lr=stuckLayer.getBoundingClientRect();
+const sx=rr.right-160,sy=rr.top+rr.height/2;
+const tx=8+Math.random()*75,ty=8+Math.random()*65;
+const ex=lr.left+(tx/100)*lr.width,ey=lr.top+(ty/100)*lr.height;
+const el=document.createElement('div');
+el.style.cssText='position:fixed;left:'+sx+'px;top:'+sy+'px;z-index:5000;pointer-events:none;';
+if(type==='mnemonic'){
+el.innerHTML='<div class="si-mn" style="box-shadow:0 0 35px rgba(170,0,255,.5)"><div class="w">'+res.word+'</div><div class="p">'+res.parts.map(p=>'<span>'+p+'</span>').join('')+'</div><img src="'+imgUrl+'" alt=""></div>';
+}else{
+el.innerHTML='<div class="si-img"><img src="'+imgUrl+'" alt="" style="box-shadow:0 0 35px rgba(0,245,255,.5)"><div class="c">'+res.word+'</div></div>';}
+document.body.appendChild(el);
+const dx=ex-sx,dy=ey-sy;
+const start=performance.now();
+let lastT=0;
+function fly(now){
+const t=Math.min((now-start)/1100,1);
+const ease=1-Math.pow(1-t,3);
+el.style.left=(sx+dx*ease)+'px';el.style.top=(sy+dy*ease)+'px';
+el.style.transform='rotate('+(720*ease)+'deg) scale('+(1-.3*ease)+')';
+if(now-lastT>25){
+const trail=document.createElement('div');trail.className='trl';
+trail.style.left=(sx+dx*ease+50)+'px';trail.style.top=(sy+dy*ease+50)+'px';
+trail.style.background=['var(--cyan)','var(--pink)','var(--purple)'][Math.floor(Math.random()*3)];
+document.body.appendChild(trail);setTimeout(()=>trail.remove(),350);lastT=now;}
+if(t<1)requestAnimationFrame(fly);
+else{el.remove();sfxLand();placeOnRoom(res,type,tx,ty,imgUrl);}}
+requestAnimationFrame(fly);}
+function placeOnRoom(res,type,xp,yp,imgUrl){
+const item=document.createElement('div');item.className='si';item.style.left=xp+'%';item.style.top=yp+'%';
+let inner='';
+if(type==='mnemonic'){
+inner='<div class="si-mn"><div class="w">'+res.word+'</div><div class="p">'+res.parts.map(p=>'<span>'+p+'</span>').join('')+'</div><img src="'+imgUrl+'" alt=""></div>';
+}else{
+inner='<div class="si-img"><img src="'+imgUrl+'" alt=""><div class="c">'+res.word+'</div></div>';}
+item.innerHTML=inner+'<button class="si-close" onclick="event.stopPropagation();removeItem(\''+res.word+'\')">&times;</button>';
+item.style.transform='scale(1.5)';item.style.transition='transform .45s cubic-bezier(.34,1.56,.64,1)';
+stuckLayer.appendChild(item);
+requestAnimationFrame(()=>item.style.transform='scale(1)');
+spawnParticles(xp,yp);spawnSparkles(xp,yp);spawnRipple(xp,yp);
+stuckItems.push({word:res.word,type,element:item});
+wordCount++;updateProgress();
+if(wordCount>=MAX)setTimeout(celebrate,800);}
+function spawnParticles(xp,yp){
+const rr=roomPanel.getBoundingClientRect();
+const cx=rr.left+(xp/100)*rr.width,cy=rr.top+(yp/100)*rr.height;
+const cols=['#ff6b6b','#4ecdc4','#a855f7','#f97316','#06b6d4','#00f5ff','#ff00aa','#00ff88'];
+for(let i=0;i<16;i++){
+const p=document.createElement('div');p.className='ptc';p.style.left=cx+'px';p.style.top=cy+'px';p.style.background=cols[i%8];
+const s=4+Math.random()*6;p.style.width=s+'px';p.style.height=s+'px';
+const a=(i/16)*Math.PI*2,d=40+Math.random()*50;
+p.style.setProperty('--tx',Math.cos(a)*d+'px');p.style.setProperty('--ty',Math.sin(a)*d+'px');
+document.body.appendChild(p);setTimeout(()=>p.remove(),700);}}
+function spawnSparkles(xp,yp){
+const rr=roomPanel.getBoundingClientRect();
+const cx=rr.left+(xp/100)*rr.width,cy=rr.top+(yp/100)*rr.height;
+for(let i=0;i<8;i++){
+const s=document.createElement('div');s.className='spk';
+s.style.left=(cx+Math.random()*60-30)+'px';s.style.top=(cy+Math.random()*60-30)+'px';
+s.style.animationDelay=(Math.random()*.25)+'s';
+document.body.appendChild(s);setTimeout(()=>s.remove(),500);}}
+function spawnRipple(xp,yp){
+const rr=roomPanel.getBoundingClientRect();
+const cx=rr.left+(xp/100)*rr.width,cy=rr.top+(yp/100)*rr.height;
+const r=document.createElement('div');
+r.style.cssText='position:fixed;left:'+(cx-10)+'px;top:'+(cy-10)+'px;width:20px;height:20px;border:2px solid var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;animation:rip .6s ease-out forwards';
+document.body.appendChild(r);setTimeout(()=>r.remove(),600);}
+function removeItem(word){
+const i=stuckItems.findIndex(s=>s.word===word);
+if(i>-1){sfxRemove();const el=stuckItems[i].element;el.style.transition='all .3s';el.style.transform='scale(0) rotate(180deg)';el.style.opacity='0';setTimeout(()=>el.remove(),300);stuckItems.splice(i,1);wordCount--;updateProgress();roomFull.classList.remove('on');wordInput.disabled=false;learnBtn.disabled=false;}}
+function addHistory(word,type){
+const el=document.createElement('div');el.className='hi '+(type==='mnemonic'?'mn':'im');
+el.innerHTML='<span>'+word+'</span><b>'+(type==='mnemonic'?'MNEMONIC':'IMAGE')+'</b>';
+el.onclick=()=>{const s=stuckItems.find(i=>i.word===word);if(s){s.element.style.filter='drop-shadow(0 0 25px var(--cyan))';setTimeout(()=>s.element.style.filter='',1500)}};
+histScroll.appendChild(el);histScroll.scrollTop=histScroll.scrollHeight;}
+function updateProgress(){
+prgCount.textContent=wordCount+' / '+MAX;
+prgFill.style.width=(wordCount/MAX*100)+'%';
+if(wordCount>=MAX){wordInput.disabled=true;learnBtn.disabled=true;roomFull.classList.add('on')}}
+function showError(){sfxError();errorToast.classList.add('show');roomPanel.classList.add('shake');setTimeout(()=>{errorToast.classList.remove('show');roomPanel.classList.remove('shake')},3000)}
+function celebrate(){
+sfxCelebrate();
+const cols=['#ff6b6b','#4ecdc4','#a855f7','#f97316','#06b6d4','#00f5ff','#ff00aa','#00ff88','#ffee00'];
+for(let i=0;i<100;i++){setTimeout(()=>{
+const c=document.createElement('div');c.className='cft';c.style.left=Math.random()*100+'vw';
+c.style.background=cols[i%9];c.style.width=(5+Math.random()*10)+'px';c.style.height=(5+Math.random()*10)+'px';
+c.style.animationDuration=(2+Math.random()*3)+'s';c.style.borderRadius=Math.random()>.5?'50%':'2px';
+document.body.appendChild(c);setTimeout(()=>c.remove(),5500);},i*25)}
+setTimeout(()=>celebOverlay.classList.add('on'),4000);}
+function resetGame(){
+stuckItems.forEach(i=>i.element.remove());stuckItems=[];wordCount=0;histScroll.innerHTML='';
+resultBox.innerHTML='<div class="ph"><div class="ph-i">🧠</div>Enter a word to begin learning</div>';
+updateProgress();roomFull.classList.remove('on');celebOverlay.classList.remove('on');
+wordInput.disabled=false;learnBtn.disabled=false;wordInput.focus();}
+</script>
+</body>
+</html>
